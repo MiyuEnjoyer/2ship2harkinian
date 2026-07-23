@@ -23,6 +23,7 @@ RandoItemId CurrentTrapItem(RandoCheckId randoCheckId = RC_UNKNOWN);
 bool IsItemObtainable(RandoItemId randoItemId, RandoCheckId randoCheckId = RC_UNKNOWN);
 RandoItemId ConvertItem(RandoItemId randoItemId, RandoCheckId randoCheckId = RC_UNKNOWN);
 RandoCheckId FindItemPlacement(RandoItemId randoItemId);
+std::string GetItemLocationForHint(RandoItemId randoItemId, bool exact);
 void RegisterMenu();
 
 std::vector<RandoItemId> GetComputedStartingItems(RandoSaveInfo& randoSaveInfo);

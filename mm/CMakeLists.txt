@@ -277,13 +277,6 @@ if (BUILD_ARCHIPELAGO AND NOT CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch|CafeOS")
         $<$<PLATFORM_ID:Windows>:_WIN32_WINNT=0x0601>
     )
 
-    # websocketpp 0.8.2 has C++20 incompatibilities on GCC; compile with C++17 there.
-    # Skip PCH for this file so the C++17 override doesn't conflict with the C++20 PCH
-    # (which causes C2855 on MSVC and "C++20 was enabled in PCH" on clang).
-    # MSVC and AppleClang compile it fine at C++20, so no override needed there — forcing
-    # C++17 unconditionally mixes ODR-shared libc++ inline symbols (e.g. Resource.h's
-    # gAltAssetPrefix) compiled under two different -std= levels in the same binary, which
-    # corrupts libc++'s ABI-tagged std::string layout and crashes at static-init time.
     if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         set_source_files_properties(2s2h/Network/Archipelago/Archipelago.cpp PROPERTIES
             COMPILE_FLAGS "-std=gnu++17"

@@ -1,4 +1,5 @@
 #include "ActorBehavior.h"
+#include "2s2h/Network/Archipelago/Archipelago.h"
 #include <libultraship/bridge/consolevariablebridge.h>
 #include "2s2h/CustomMessage/CustomMessage.h"
 #include "2s2h/Rando/MiscBehavior/Traps.h"
@@ -76,18 +77,28 @@ s32 EnGirlA_RandoCanBuyFunc(PlayState* play, EnGirlA* enGirlA) {
 
 void EnGirlA_RandoBuyFunc(PlayState* play, EnGirlA* enGirlA) {
     auto& randoSaveCheck = RANDO_SAVE_CHECKS[enGirlA->actor.world.rot.z];
-    RandoCheckId randoCheckId = (RandoCheckId)enGirlA->actor.world.rot.z;
-    RandoItemId randoItemId = Rando::ConvertItem(randoSaveCheck.randoItemId, randoCheckId);
-    randoSaveCheck.obtained = randoSaveCheck.cycleObtained = true;
+    RandoItemId randoItemId = Rando::ConvertItem(randoSaveCheck.randoItemId, (RandoCheckId)enGirlA->actor.world.rot.z);
+
+    // Deduct rupees
     Rupees_ChangeBy(-play->msgCtx.unk1206C);
-    Anchor::Instance->SendPacket_SetCheckStatus((RandoCheckId)enGirlA->actor.world.rot.z);
-    if (randoItemId == RI_TRAP) {
-        RollTrapType();
-    } else if (randoItemId == RI_JUNK) {
-        randoItemId = Rando::CurrentJunkItem(randoCheckId);
+
+    if (IS_ARCHI && Archipelago::Instance->IsConnected() &&
+        !randoSaveCheck.obtained) { // For AP, let AP handle the first time give
+        Archipelago::Instance->SendLocationCheck((RandoCheckId)enGirlA->actor.world.rot.z);
+        randoSaveCheck.cycleObtained = true;
+        randoSaveCheck.obtained = true;
+    } else { // Otherwise, give immediately
+        randoSaveCheck.cycleObtained = true;
+        randoSaveCheck.obtained = true;
+        Anchor::Instance->SendPacket_SetCheckStatus((RandoCheckId)enGirlA->actor.world.rot.z);
+
+        if (randoItemId == RI_TRAP) {
+            RollTrapType();
+        }
+
+        Rando::GiveItem(randoItemId);
+        Anchor::Instance->SendPacket_GiveItem(1, randoItemId);
     }
-    Rando::GiveItem(randoItemId);
-    Anchor::Instance->SendPacket_GiveItem(1, randoItemId);
 }
 
 void EnGirlA_RandoBuyFanfareFunc(PlayState* play, EnGirlA* enGirlA) {
