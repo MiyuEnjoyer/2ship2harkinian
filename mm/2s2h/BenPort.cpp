@@ -43,6 +43,7 @@
 #include "2s2h/Enhancements/FrameInterpolation/FrameInterpolation.h"
 
 #include "2s2h/Network/Sail/Sail.h"
+#include "2s2h/Network/Anchor/Anchor.h"
 
 #include <libultraship/libultraship.h>
 #include <libultraship/controller/controldeck/ControlDeck.h>
@@ -116,6 +117,7 @@ OTRGlobals* OTRGlobals::Instance;
 GameInteractor* GameInteractor::Instance;
 AudioCollection* AudioCollection::Instance;
 Sail* Sail::Instance;
+Anchor* Anchor::Instance;
 
 extern "C" char** cameraStrings;
 bool prevAltAssets = false;
@@ -959,6 +961,8 @@ extern "C" void InitOTR(int argc, char* argv[]) {
     GameInteractor::Instance = new GameInteractor();
     AudioCollection::Instance = new AudioCollection();
     Sail::Instance = new Sail();
+    Anchor::Instance = new Anchor();
+
     LoadGuiTextures();
     BenGui::SetupGuiElements();
     ShipInit::InitAll();
@@ -992,6 +996,9 @@ extern "C" void InitOTR(int argc, char* argv[]) {
     if (CVarGetInteger("gNetwork.Sail.Enabled", 0)) {
         Sail::Instance->Enable();
     }
+    if (CVarGetInteger("gNetwork.Anchor.Enabled", 0)) {
+        Anchor::Instance->Enable();
+    }
 
     Ship::Context::GetRawInstance()->GetFileDropMgr()->RegisterDropHandler(BinarySaveConverter_HandleFileDropped);
     Ship::Context::GetRawInstance()->GetFileDropMgr()->RegisterDropHandler(SaveManager_HandleFileDropped);
@@ -1006,6 +1013,7 @@ extern "C" void DeinitOTR() {
     OTRAudio_Exit();
     GameInteractor::Instance->CancelAllActions();
     Sail::Instance->Disable();
+    Anchor::Instance->Disable();
     SDLNet_Quit();
 
     // Destroying gui here because we have shared ptrs to LUS objects which output to SPDLOG which is destroyed before
