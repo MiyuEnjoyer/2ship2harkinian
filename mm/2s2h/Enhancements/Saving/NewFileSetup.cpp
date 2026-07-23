@@ -14,6 +14,7 @@
 #include "2s2h/BenPort.h"
 #include "2s2h/Rando/MiscBehavior/MiscBehavior.h"
 #include "2s2h/Rando/Spoiler/Spoiler.h"
+#include "2s2h/Network/Archipelago/Archipelago.h"
 
 extern "C" {
 #include "functions.h"
@@ -35,6 +36,14 @@ typedef enum {
     NEW_FILE_SETUP_ROW_SEED,
     NEW_FILE_SETUP_ROW_MAX,
 } NewFileSetupRow;
+
+// Indexes sModeChoices, so the two have to stay in the same order
+typedef enum {
+    NEW_FILE_SETUP_MODE_VANILLA,
+    NEW_FILE_SETUP_MODE_RANDOMIZER,
+    NEW_FILE_SETUP_MODE_ARCHI,
+    NEW_FILE_SETUP_MODE_MAX,
+} NewFileSetupMode;
 
 typedef struct {
     const char* texture;
@@ -70,7 +79,7 @@ typedef struct {
 
 static s16 sRow = NEW_FILE_SETUP_ROW_PRESET;
 static s16 sAlpha = 0;
-static bool sIsRando = false;
+static s16 sMode = NEW_FILE_SETUP_MODE_VANILLA;
 static s16 sPresetIndex = 0;
 static std::vector<std::string> sPresetNames;
 static std::string sPresetDisplay;
@@ -83,9 +92,10 @@ static SetupLabel sHeadings[NEW_FILE_SETUP_ROW_MAX] = {
     { gFileSelModeHeaderTex, 40, 5, 4, 30 },
     { gFileSelSeedHeaderTex, 32, 2, 4, 28 },
 };
-static SetupLabel sModeChoices[] = {
+static SetupLabel sModeChoices[NEW_FILE_SETUP_MODE_MAX] = {
     { gFileSelVanillaTex, 48, 5, 3, 38 },
     { gFileSelRandomizerTex, 80, 5, 3, 69 },
+    { gFileSelArchiTex, 40, 4, 3, 31 },
 };
 static SetupLabel sGenerateNew = { gFileSelGenerateNewTex, 88, 3, 3, 82 };
 static SetupLabel sArrowLeft = { gFileSelArrowLeftTex, 16, 4, 4, 7 };
@@ -97,8 +107,9 @@ static s16 sCursorTimer = 20;
 static const s16 sCursorPrimTargets[2][3] = { { 255, 255, 255 }, { 0, 255, 255 } };
 static const s16 sCursorEnvTargets[2][3] = { { 0, 0, 0 }, { 0, 150, 150 } };
 
+// An Archi file is dealt its checks by the server, so there is no local seed to pick for one
 static bool RowIsVisible(s16 row) {
-    return (row != NEW_FILE_SETUP_ROW_SEED) || sIsRando;
+    return (row != NEW_FILE_SETUP_ROW_SEED) || (sMode == NEW_FILE_SETUP_MODE_RANDOMIZER);
 }
 
 static s16 NextVisibleRow(s16 row, s16 step) {
@@ -107,6 +118,15 @@ static s16 NextVisibleRow(s16 row, s16 step) {
     } while (!RowIsVisible(row));
 
     return row;
+}
+
+// Every row on this screen wraps around its own list of values
+static s16 CycleIndex(s16 index, s16 count, bool forward) {
+    if (count <= 0) {
+        return 0;
+    }
+
+    return (s16)((index + (forward ? 1 : count - 1)) % count);
 }
 
 static uint32_t SeedHashForSpoiler(const std::string& fileName) {
@@ -354,10 +374,13 @@ static void ApplySelection(void) {
         PresetManager_ApplyPresetByName(sPresetNames[sPresetIndex]);
     }
 
-    CVarSetInteger("gRando.Enabled", sIsRando ? 1 : 0);
+    bool isRando = (sMode == NEW_FILE_SETUP_MODE_RANDOMIZER);
+
+    CVarSetInteger("gRando.Enabled", isRando ? 1 : 0);
+    CVarSetInteger("gArchipelago.Enabled", (sMode == NEW_FILE_SETUP_MODE_ARCHI) ? 1 : 0);
 
     // OnFileCreate reads the pair to decide whether to generate a seed or replay a spoiler
-    Rando::Spoiler::SelectSpoiler(sIsRando ? sSeedIndex : 0);
+    Rando::Spoiler::SelectSpoiler(isRando ? sSeedIndex : 0);
 
     CVarSave();
 }
@@ -392,6 +415,11 @@ extern "C" void FileSelect_UpdateNewFileSetup(GameState* thisx) {
     }
 
     if (CHECK_BTN_ALL(input->press.button, BTN_A) || CHECK_BTN_ALL(input->press.button, BTN_START)) {
+        // The server hands out the checks for an Archi file, so it has to be reachable before one is made
+        if ((sMode == NEW_FILE_SETUP_MODE_ARCHI) && !Archipelago::Instance->EnsureConnected()) {
+            return;
+        }
+
         Audio_PlaySfx(NA_SE_SY_FSEL_DECIDE_L);
         ApplySelection();
         LeaveSetup(fileSelect, CM_START_NAME_ENTRY);
@@ -417,12 +445,11 @@ extern "C" void FileSelect_UpdateNewFileSetup(GameState* thisx) {
     Audio_PlaySfx(NA_SE_SY_FSEL_CURSOR);
 
     if (sRow == NEW_FILE_SETUP_ROW_MODE) {
-        sIsRando = !sIsRando;
+        sMode = CycleIndex(sMode, NEW_FILE_SETUP_MODE_MAX, right);
     } else if (sRow == NEW_FILE_SETUP_ROW_SEED) {
-        s16 seedCount = (s16)Rando::Spoiler::spoilerOptions.size();
-        sSeedIndex = (s16)((sSeedIndex + (right ? 1 : seedCount - 1)) % seedCount);
+        sSeedIndex = CycleIndex(sSeedIndex, (s16)Rando::Spoiler::spoilerOptions.size(), right);
     } else {
-        sPresetIndex = (s16)((sPresetIndex + (right ? 1 : presetCount - 1)) % presetCount);
+        sPresetIndex = CycleIndex(sPresetIndex, presetCount, right);
         UpdatePresetDisplay();
     }
 }
@@ -458,10 +485,10 @@ extern "C" void FileSelect_DrawNewFileSetup(GameState* thisx) {
         DrawDivider(fileSelect, SETUP_DIVIDER_Y(row), alpha);
     }
 
-    // Mode: both values side by side
+    // Mode: every value side by side
     s16 valueX = SETUP_VALUE_X;
-    for (s16 i = 0; i < (s16)ARRAY_COUNT(sModeChoices); i++) {
-        SetValueColor(fileSelect, i == (sIsRando ? 1 : 0), sRow == NEW_FILE_SETUP_ROW_MODE, alpha);
+    for (s16 i = 0; i < NEW_FILE_SETUP_MODE_MAX; i++) {
+        SetValueColor(fileSelect, i == sMode, sRow == NEW_FILE_SETUP_ROW_MODE, alpha);
         DrawLabel(fileSelect, &sModeChoices[i], valueX, SETUP_VALUE_Y(NEW_FILE_SETUP_ROW_MODE));
         valueX += sModeChoices[i].inkWidth + SETUP_VALUE_GAP;
     }
@@ -505,7 +532,9 @@ void RegisterNewFileSetup() {
 
         sRow = NEW_FILE_SETUP_ROW_PRESET;
         sAlpha = 0;
-        sIsRando = CVarGetInteger("gRando.Enabled", 0) != 0;
+        sMode = CVarGetInteger("gArchipelago.Enabled", 0) ? NEW_FILE_SETUP_MODE_ARCHI
+                : CVarGetInteger("gRando.Enabled", 0)     ? NEW_FILE_SETUP_MODE_RANDOMIZER
+                                                          : NEW_FILE_SETUP_MODE_VANILLA;
         RefreshPresetList();
         RefreshSeedList();
 

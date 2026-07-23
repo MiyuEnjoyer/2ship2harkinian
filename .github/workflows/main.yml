@@ -13,7 +13,7 @@ jobs:
     - name: Checkout Archipelago Fork
       uses: actions/checkout@v4
       with:
-        repository: Patrick12115/Archipelago
+        repository: garrettjoecox/Archipelago
         ref: 2ship-apworld
         sparse-checkout: |
           worlds/mm_2ship

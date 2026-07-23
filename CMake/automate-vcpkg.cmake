@@ -139,10 +139,13 @@ macro(_install_or_update_vcpkg)
         set(VCPKG_BOOTSTRAP ${VCPKG_ROOT}/bootstrap-vcpkg.sh)
     endif()
 
-    if(NOT EXISTS ${VCPKG_EXEC})
-        message("Bootstrapping vcpkg in ${VCPKG_ROOT}")
-        execute_process(COMMAND ${VCPKG_BOOTSTRAP} WORKING_DIRECTORY ${VCPKG_ROOT})
-    endif()
+    # Unconditionally, not just when vcpkg.exe is absent: a cached/preexisting vcpkg checkout keeps
+    # whatever tool it was bootstrapped with, while the `git pull` above moves the ports tree to
+    # latest. Once upstream bumps the required tool version, every `vcpkg install` aborts with
+    # "vcpkg-tool is out of date" until this is re-run. Bootstrapping is idempotent and only
+    # downloads anything when the version actually differs.
+    message("Bootstrapping vcpkg in ${VCPKG_ROOT}")
+    execute_process(COMMAND ${VCPKG_BOOTSTRAP} WORKING_DIRECTORY ${VCPKG_ROOT})
 
     if(NOT EXISTS ${VCPKG_EXEC})
         message(FATAL_ERROR "***** FATAL ERROR: Could not bootstrap vcpkg *****")
