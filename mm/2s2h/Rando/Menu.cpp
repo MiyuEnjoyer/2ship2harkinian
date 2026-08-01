@@ -645,6 +645,9 @@ static void DrawLogicConditionsTab() {
                        "Requires Only Song - Requires only the correct song.\n\n"
                        "Open - Dungeons will be open with no requirements.");
     UIWidgets::CVarCombobox("Trials Access", Rando::StaticData::Options[RO_ACCESS_TRIALS].cvar, &accessTrialsOptions);
+    CVarCheckbox("Shuffle Interior Entrances", Rando::StaticData::Options[RO_SHUFFLE_ENTRANCES_INTERIORS].cvar);
+    CVarCheckbox("Shuffle Dungeon Entrances", Rando::StaticData::Options[RO_SHUFFLE_ENTRANCES_DUNGEONS].cvar);
+    CVarCheckbox("Shuffle Overworld Entrances", Rando::StaticData::Options[RO_SHUFFLE_ENTRANCES_OVERWORLD].cvar);
     ImGui::EndChild();
     ImGui::SameLine();
     ImGui::BeginChild("randoLogicColumn2", ImVec2(columnWidth, 0));
