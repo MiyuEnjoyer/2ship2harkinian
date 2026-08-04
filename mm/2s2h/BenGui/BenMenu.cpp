@@ -198,6 +198,12 @@ static const std::vector<const char*> mirroredWorldModes = {
     "Dungeons Random (Seeded)", // MIRRORED_WORLD_DUNGEONS_RANDOM_SEEDED
 };
 
+static const std::vector<const char*> enemyRandoModes = {
+    "Off",             // ENEMY_RANDO_OFF
+    "Random",          // ENEMY_RANDO_RANDOM
+    "Random (Seeded)", // ENEMY_RANDO_RANDOM_SEEDED
+};
+
 static const std::unordered_map<int32_t, const char*> damageMultiplierOptions = {
     { 0, "1x" }, { 1, "2x" }, { 2, "4x" }, { 3, "8x" }, { 4, "16x" }, { 10, "1 Hit KO" },
 };
@@ -1142,6 +1148,15 @@ void BenMenu::AddEnhancements() {
         .CVar("gModes.MirroredWorld.StoneTowerTempleFix")
         .Options(CheckboxOptions().Tooltip(
             "Mirrors (or unmirrors) the inverted Stone Tower Temple to make its layout consistent."));
+    AddWidget(path, "Enemy Rando", WIDGET_CVAR_COMBOBOX)
+        .CVar("gModes.EnemyRando.Mode")
+        .Options(ComboboxOptions()
+                     .DefaultIndex(ENEMY_RANDO_OFF)
+                     .Tooltip("Replaces each enemy with a random enemy as it spawns.\n\n"
+                              " - Random: A different pick every time the spot is loaded.\n"
+                              " - Random (Seeded): Deterministic based on the current randomizer seed/file, so "
+                              "revisiting the same spot gives the same enemy.")
+                     .ComboVec(&enemyRandoModes));
     AddWidget(path, "Other", WIDGET_SEPARATOR_TEXT);
     AddWidget(path, "Milk Run Reward Options", WIDGET_CVAR_COMBOBOX)
         .CVar("gEnhancements.Minigames.CremiaHugs")

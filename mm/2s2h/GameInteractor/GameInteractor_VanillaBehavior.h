@@ -177,6 +177,14 @@ typedef enum {
     VB_BE_NEAR_DOOR,
 
     // #### `result`
+    // ```c
+    // true
+    // ```
+    // #### `args`
+    // - `*EnBigpo` (the summoned Big Poe whose flames have all been found)
+    VB_BIG_POE_APPEAR_AFTER_FLAME_HUNT,
+
+    // #### `result`
     // ##### In `func_80A25D28`, for `*ObjIceblock`:
     // ```c
     // this->unk_26E[sp30] >= 11
@@ -2350,6 +2358,16 @@ typedef enum {
     // #### `args`
     // - None
     VB_STONE_HEISHI_SET_ACTION,
+
+    // #### `result`
+    // ```c
+    // (enemy->home.pos.x == fairy->home.pos.x) && (enemy->home.pos.y == fairy->home.pos.y) &&
+    //     (enemy->home.pos.z == fairy->home.pos.z)
+    // ```
+    // #### `args`
+    // - `*Actor` (the Stray Fairy looking for its host)
+    // - `*Actor` (the enemy being considered)
+    VB_STRAY_FAIRY_IS_HELD_BY_ENEMY,
 
     // #### `result`
     // ```c
