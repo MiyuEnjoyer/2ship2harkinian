@@ -19,6 +19,14 @@ static RegisterShipInitFunc registerHooks(
         COND_HOOK(OnPlayerSceneExit, IsEntranceShuffleEnabled(),
                   [](s32 nextEntrance) { sPlayerSceneExitPending = true; });
 
+        // Ikana's weather follows you through an entrance and swaps the scene over to the tinted Ikana sky, but a
+        // scene with no sky of its own has nothing to draw it with and crashes. (only possible with entrance rando)
+        COND_HOOK(OnSceneInit, IsEntranceShuffleEnabled(), [](s8 sceneId, s8 spawnNum) {
+            if (gPlayState->skyboxCtx.dListBuf == NULL) {
+                gPlayState->skyboxId = SKYBOX_NONE;
+            }
+        });
+
         COND_HOOK(OnPlayDestroy, IsEntranceShuffleEnabled(), []() {
             bool playerWalkedThroughIt = sPlayerSceneExitPending;
             sPlayerSceneExitPending = false;
