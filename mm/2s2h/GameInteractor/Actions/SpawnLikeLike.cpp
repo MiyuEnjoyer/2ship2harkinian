@@ -29,7 +29,7 @@ static GIActions::Register spawnLikeLikeAction({
 void RegisterSpawnLikeLikeObjectDependency() {
     REGISTER_VB_SHOULD(VB_ENABLE_OBJECT_DEPENDENCY, {
         ObjectId objectId = (ObjectId)va_arg(args, int);
-        if (objectId == OBJECT_RR) {
+        if (objectId == OBJECT_RR || objectId == OBJECT_GI_SHIELD_2) {
             *should = false;
         }
     });

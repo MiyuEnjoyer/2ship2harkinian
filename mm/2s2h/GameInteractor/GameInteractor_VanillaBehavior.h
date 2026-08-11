@@ -1237,6 +1237,22 @@ typedef enum {
 
     // #### `result`
     // ```c
+    // bubble != NULL
+    // ```
+    // #### `args`
+    // - `*Player`
+    VB_DEKU_COMMON_HEAD_OVERRIDE_HELD_ACTOR,
+
+    // #### `result`
+    // ```c
+    // player->heldActor != NULL
+    // ```
+    // #### `args`
+    // - `*Actor` (player->heldActor)
+    VB_DEKU_COMMON_UPPER_LIMB_OVERRIDE_HELD_ACTOR,
+
+    // #### `result`
+    // ```c
     // true
     // ```
     // #### `args`
@@ -2456,6 +2472,15 @@ typedef enum {
     // #### `args`
     // - `*ObjYasi`
     VB_TREE_DROP_COLLECTIBLE,
+
+    // #### `result`
+    // ```c
+    // btn <= EQUIP_SLOT_NONE
+    // ```
+    // #### `args`
+    // - `*Player`
+    // - `*s32` (button)
+    VB_UNEQUIP_MASK_NOT_ON_BUTTON,
 
     // #### `result`
     // ```c

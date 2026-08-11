@@ -284,39 +284,45 @@ std::vector<std::string> contributors = {
     "ProxySaw", // "Garrett Cox", manual replacement
     "Archez",   // "Adam Bird", dupe
     "Eblo",
-    "louist103",
     "balloondude2",
+    "louist103",
     "Caladius",
-    "inspectredc",
-    "sitton76",
     "mckinlee",
+    "sitton76",
+    "inspectredc",
+    "Jordan Longstaff",
     "ItsHeckinPat", // "Patrick12115", dupe
-    "briaguya",
+    "Jameriquiah",  // "Jordyn Hardyman", dupe
     "Malkierian",
+    "briaguya",
     "PurpleHato",
     "Joshua Sanchez",
+    "Garrett",
     "aMannus",
-    "Jordan Longstaff",
     "zodiac-ill",
+    "OtherBlue",
     "Glought",
     "rachaellama",
     "lightmanLP",
     "Spodi",
     "Sirius902",
     "Revo",
-    "lilacLunatic",
+    "J",
+    "anthony-barricelli",
     "ReddestDream",
-    "OtherBlue",
+    "Philip Dubé",
     "Nicholas Estelami",
     "Mrlinkwii",
+    "lilacLunatic",
     "Liam Scholte",
     "Lars-Christian Selland",
-    "Jameriquiah", // "Jordyn Hardyman", dupe
+    "GaryOderNichts",
+    "enzu.ru",
+    "Bradley Sherman",
     "verbes4",
-    "justawayofthesamurai",
-    "cplaster",
-    "ammar sadaoui",
     "Travis",
+    "tortugaveloz",
+    "stellarkookies",
     "Rozelette",
     "Reinhardt R. Gaming",
     "Ralphie Morell",
@@ -324,17 +330,28 @@ std::vector<std::string> contributors = {
     "Qlonever",
     "Mothstery",
     "MegaMech",
+    "Marvin Coto",
     "Louis",
     "Kenix3",
+    "kaeporagaebora",
+    "justawayofthesamurai",
     "Jacob Erly",
     "Hoeloe",
+    "Hannah Brown",
+    "grande1900",
     "Ghunzor",
+    "GhostlyDark",
+    "frogssoldseparately",
     "Felix Dietrich",
     "Extloga",
     "ErawanJohnson",
+    "djevangelia",
+    "cplaster",
     "Corbin Park",
     "Captain Kitty Cat",
     "Ben Willmore",
+    "banteg",
+    "ammar sadaoui",
     "AltoXorg",
     "Alejandro Asenjo Nitti",
 };
@@ -2152,7 +2169,15 @@ void BenMenu::AddDevTools() {
         .CVar("gOpenWindows.GfxDebugger")
         .Options(ButtonOptions().Tooltip(
             "Enables the Gfx Debugger window, allowing you to input commands, type help for some examples."))
-        .WindowName("GfxDebuggerWindow");
+        .WindowName("Gfx Debugger");
+
+    path = { "Dev Tools", "Action Debugger", SECTION_COLUMN_1 };
+    AddSidebarEntry("Dev Tools", "Action Debugger", 1);
+    AddWidget(path, "Popout Action Debugger", WIDGET_WINDOW_BUTTON)
+        .CVar("gWindows.ActionDebugger")
+        .Options(ButtonOptions().Tooltip("Enables the Action Debugger window, for firing any registered "
+                                         "GameInteractor action and watching the queue handle it."))
+        .WindowName("Action Debugger");
 
     path = { "Dev Tools", "Action Debugger", SECTION_COLUMN_1 };
     AddSidebarEntry("Dev Tools", "Action Debugger", 1);
