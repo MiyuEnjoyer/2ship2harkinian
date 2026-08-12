@@ -6,6 +6,7 @@
 #include <libultraship/libultraship.h>
 #include "build.h"
 #include "2s2h/Rando/Rando.h"
+#include <vector>
 
 #include <set>
 
@@ -13,6 +14,9 @@ extern "C" {
 #include "variables.h"
 #include "z64.h"
 }
+
+#define CVAR_WINDOW(var) "gWindows." var
+#define CVAR_REMOTE_ANCHOR(var) "gNetwork.Anchor." var
 
 void DummyPlayer_Init(Actor* actor, PlayState* play);
 void DummyPlayer_Update(Actor* actor, PlayState* play);
@@ -81,6 +85,7 @@ class Anchor : public Network {
     void RegisterHooks();
     void RefreshClientActors();
     void HandlePacket_AllClientState(nlohmann::json payload);
+    void HandlePacket_ChatMessage(nlohmann::json payload);
     void HandlePacket_DamagePlayer(nlohmann::json payload);
     void HandlePacket_DisableAnchor(nlohmann::json payload);
     void HandlePacket_GameComplete(nlohmann::json payload);
@@ -105,6 +110,7 @@ class Anchor : public Network {
 
     // Packet types //
     inline static const std::string ALL_CLIENT_STATE = "ALL_CLIENT_STATE";
+    inline static const std::string CHAT_MESSAGE = "CHAT_MESSAGE";
     inline static const std::string DAMAGE_PLAYER = "DAMAGE_PLAYER";
     inline static const std::string DISABLE_ANCHOR = "DISABLE_ANCHOR";
     inline static const std::string GAME_COMPLETE = "GAME_COMPLETE";
@@ -138,6 +144,7 @@ class Anchor : public Network {
     bool IsSaveLoaded();
     bool CanTeleportTo(uint32_t clientId);
 
+    void SendPacket_ChatMessage(const std::string& message);
     void SendPacket_ClearTeamState(std::string teamId);
     void SendPacket_DamagePlayer(u32 clientId, u8 damageEffect, u8 damage);
     void SendPacket_GameComplete();
@@ -176,6 +183,26 @@ class AnchorRoomWindow : public Ship::GuiWindow {
     void DrawElement() override;
     void Draw() override;
     void UpdateElement() override{};
+};
+
+class AnchorChatWindow : public Ship::GuiWindow {
+  public:
+    using GuiWindow::GuiWindow;
+
+    void InitElement() override{};
+    void DrawElement() override;
+    void Draw() override;
+    void UpdateElement() override{};
+
+  private:
+    static int InputTextCallback(ImGuiInputTextCallbackData* data);
+    void HandleHistoryNavigation(ImGuiInputTextCallbackData* data, bool up);
+
+    char mInputBuffer[512] = {};
+    std::vector<std::string> mSentHistory;
+    int32_t mHistoryPos = -1;
+    bool mRequestFocus = false;
+    int mCaptureFrames = 0;
 };
 
 #endif // __cplusplus

@@ -74,6 +74,7 @@ std::shared_ptr<InputViewer> mInputViewer;
 std::shared_ptr<InputViewerSettingsWindow> mInputViewerSettings;
 std::shared_ptr<BenModalWindow> mModalWindow;
 std::shared_ptr<AnchorRoomWindow> mAnchorRoomWindow;
+std::shared_ptr<AnchorChatWindow> mAnchorChatWindow;
 
 UIWidgets::Colors GetMenuThemeColor() {
     return mBenMenu->GetMenuThemeColor();
@@ -193,6 +194,9 @@ void SetupGuiElements() {
 
     mAnchorRoomWindow = std::make_shared<AnchorRoomWindow>("gWindows.AnchorRoom", "Anchor Room");
     gui->AddGuiWindow(mAnchorRoomWindow);
+
+    mAnchorChatWindow = std::make_shared<AnchorChatWindow>("gWindows.ChatRoom", "Anchor Chat");
+    gui->AddGuiWindow(mAnchorChatWindow);
 }
 
 void Destroy() {
@@ -227,6 +231,7 @@ void Destroy() {
     mInputViewer = nullptr;
     mInputViewerSettings = nullptr;
     mAnchorRoomWindow = nullptr;
+    mAnchorChatWindow = nullptr;
 }
 
 void RegisterPopup(std::string title, std::string message, std::string button1, std::string button2,

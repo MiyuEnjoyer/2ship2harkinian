@@ -75,6 +75,8 @@ void Anchor::ProcessIncomingPacket(nlohmann::json payload) {
     // packetType here is a string so we can't use a switch statement
     if (packetType == ALL_CLIENT_STATE)
         HandlePacket_AllClientState(payload);
+    else if (packetType == CHAT_MESSAGE)
+        HandlePacket_ChatMessage(payload);
     else if (packetType == DAMAGE_PLAYER)
         HandlePacket_DamagePlayer(payload);
     else if (packetType == DISABLE_ANCHOR)
