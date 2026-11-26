@@ -195,7 +195,7 @@ void SetupGuiElements() {
     mAnchorRoomWindow = std::make_shared<AnchorRoomWindow>("gWindows.AnchorRoom", "Anchor Room");
     gui->AddGuiWindow(mAnchorRoomWindow);
 
-    mAnchorChatWindow = std::make_shared<AnchorChatWindow>("gWindows.ChatRoom", "Anchor Chat");
+    mAnchorChatWindow = std::make_shared<AnchorChatWindow>("gWindows.AnchorChat", "Anchor Chat");
     gui->AddGuiWindow(mAnchorChatWindow);
 }
 

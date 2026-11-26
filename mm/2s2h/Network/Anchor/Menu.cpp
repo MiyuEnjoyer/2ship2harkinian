@@ -26,15 +26,6 @@ static const char* pvpModes[3] = { "Off", "On", "On + Friendly Fire" };
 static std::vector<const char*> teleportModes = { "None", "Team Only", "All" };
 static std::vector<const char*> showLocationsModes = { "None", "Team Only", "All" };
 
-static const char* chatSfxOptions[] = {
-    "Message Pass",   // 0  NA_SE_SY_MESSAGE_PASS
-    "Cursor Move",    // 1  NA_SE_SY_CURSOR
-    "Cursor Decide",  // 2  NA_SE_SY_DECIDE
-    "File Cursor",    // 3  NA_SE_SY_FSEL_CURSOR
-    "Enter File",     // 4  NA_SE_SY_FSEL_DECIDE_L
-    "Tambourine"       // 5  NA_SE_SY_METRONOME
-};
-
 void AnchorMainMenu(WidgetInfo& info) {
     auto anchor = Anchor::Instance;
 
@@ -68,7 +59,15 @@ void AnchorMainMenu(WidgetInfo& info) {
     }
     UIWidgets::PopStyleInput();
 
-    ImGui::Text("Name");
+    ImGui::Text("Name & Color");
+    static Color_RGBA8 defaultColor = { 100, 255, 100, 255 };
+    if (UIWidgets::CVarColorPicker("##Color", CVAR_REMOTE_ANCHOR("Color"), defaultColor)) {
+        // Let everyone else see the new name color right away
+        if (anchor->isConnected) {
+            anchor->SendPacket_UpdateClientState();
+        }
+    }
+    ImGui::SameLine();
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
     if (UIWidgets::InputString("##Name", &anchorName, UIWidgets::InputOptions().Color(THEME_COLOR))) {
         CVarSetString("gNetwork.Anchor.Name", anchorName.c_str());
@@ -166,71 +165,75 @@ void AnchorMainMenu(WidgetInfo& info) {
 
     UIWidgets::WindowButton("Toggle Anchor Chat Window", CVAR_WINDOW("AnchorChat"), BenGui::mAnchorChatWindow);
 
+    // MARK: Chat Settings
+    ImGui::SeparatorText("Chat Settings");
+
+    // Line the dropdowns up after the longest label
+    const float labelWidth = ImGui::CalcTextSize("Chat Message SFX").x + ImGui::GetStyle().ItemSpacing.x;
+
+    auto previewButton = [](const char* id, const char* tooltip) {
+        ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.5f, 0.5f));
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f)); // so the glyph sits in the middle
+        const float btnSize = ImGui::GetFrameHeight();
+        const bool pressed = ImGui::Button(id, ImVec2(btnSize, btnSize));
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", tooltip);
+        }
+        ImGui::PopStyleVar(2);
+        return pressed;
+    };
+
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Chat Message SFX");
-    ImGui::SameLine();
-
+    ImGui::SameLine(labelWidth);
     {
         int sfxIndex = CVarGetInteger(CVAR_REMOTE_ANCHOR("ChatSfx"), 0);
-        const int sfxCount = IM_ARRAYSIZE(chatSfxOptions);
-
-        if (sfxIndex < 0 || sfxIndex >= sfxCount) {
+        if (sfxIndex < 0 || sfxIndex >= ANCHOR_CHAT_SFX_COUNT) {
             sfxIndex = 0;
         }
 
-        ImGui::SetNextItemWidth(ImGui::GetFontSize() * 10.0f); // tune width as you like
-        if (ImGui::Combo("##ChatMessageSfx", &sfxIndex, chatSfxOptions, sfxCount)) {
+        ImGui::SetNextItemWidth(ImGui::GetFontSize() * 10.0f);
+        if (ImGui::Combo("##ChatMessageSfx", &sfxIndex, ANCHOR_CHAT_SFX_NAMES, ANCHOR_CHAT_SFX_COUNT)) {
             CVarSetInteger(CVAR_REMOTE_ANCHOR("ChatSfx"), sfxIndex);
             Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
         }
     }
-
     ImGui::SameLine();
+    if (previewButton(ICON_FA_PLAY "##PreviewChatSfx", "Preview selected SFX")) {
+        AnchorChat_PlayChatSfx();
+    }
 
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted("Chat Ping SFX");
+    ImGui::SameLine(labelWidth);
     {
-        ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.5f, 0.5f));
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f)); // tighter so the glyph sits in the middle
+        int pingIndex = CVarGetInteger(CVAR_REMOTE_ANCHOR("ChatPingSound"), 0);
+        if (pingIndex < 0 || pingIndex >= ANCHOR_CHAT_PING_SFX_COUNT) {
+            pingIndex = 0;
+        }
 
-        const float btnSize = ImGui::GetFrameHeight();
-        if (ImGui::Button(ICON_FA_PLAY, ImVec2(btnSize, btnSize))) {
-            static const u16 chatSfxIds[] = {
-                NA_SE_SY_MESSAGE_PASS,
-                NA_SE_SY_CURSOR,
-                NA_SE_SY_DECIDE,
-                NA_SE_SY_FSEL_CURSOR,
-                NA_SE_SY_FSEL_DECIDE_L,
-                NA_SE_SY_METRONOME
-            };
-
-            int idx = CVarGetInteger(CVAR_REMOTE_ANCHOR("ChatSfx"), 0);
-            if (idx < 0 || idx >= (int)(sizeof(chatSfxIds) / sizeof(chatSfxIds[0]))) {
-                idx = 0;
-            }
-
-            AudioSfx_PlaySfx(chatSfxIds[idx],
-                &gSfxDefaultPos, 4,
-                &gSfxDefaultFreqAndVolScale,
-                &gSfxDefaultFreqAndVolScale,
-                &gSfxDefaultReverb);
+        ImGui::SetNextItemWidth(ImGui::GetFontSize() * 10.0f);
+        if (ImGui::Combo("##ChatPingSfx", &pingIndex, ANCHOR_CHAT_PING_SFX_NAMES, ANCHOR_CHAT_PING_SFX_COUNT)) {
+            CVarSetInteger(CVAR_REMOTE_ANCHOR("ChatPingSound"), pingIndex);
+            Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Preview selected SFX");
+            ImGui::SetTooltip("Plays instead of the normal chat sound when someone @mentions you");
         }
-
-        ImGui::PopStyleVar(2);
+    }
+    ImGui::SameLine();
+    if (previewButton(ICON_FA_PLAY "##PreviewPingSfx", "Preview selected SFX")) {
+        AnchorChat_PlayPingSfx();
     }
 
     static std::vector<const char*> chatHotkeyOptions = {
-        "Enter",  // 0
-        "T"       // 1
+        "Enter", // 0
+        "T"      // 1
     };
-
-    ImGui::Spacing();
 
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("Chat Hotkey");
-    ImGui::SameLine();
-
+    ImGui::SameLine(labelWidth);
     {
         int hotkeyIndex = CVarGetInteger(CVAR_REMOTE_ANCHOR("ChatHotkey"), 0);
         if (hotkeyIndex < 0 || hotkeyIndex >= (int)chatHotkeyOptions.size()) {
@@ -238,8 +241,7 @@ void AnchorMainMenu(WidgetInfo& info) {
         }
 
         ImGui::SetNextItemWidth(ImGui::GetFontSize() * 8.0f);
-        if (ImGui::Combo("##ChatHotkey", &hotkeyIndex, chatHotkeyOptions.data(),
-                        (int)chatHotkeyOptions.size())) {
+        if (ImGui::Combo("##ChatHotkey", &hotkeyIndex, chatHotkeyOptions.data(), (int)chatHotkeyOptions.size())) {
             CVarSetInteger(CVAR_REMOTE_ANCHOR("ChatHotkey"), hotkeyIndex);
             Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
         }
@@ -247,17 +249,19 @@ void AnchorMainMenu(WidgetInfo& info) {
 
     ImGui::Spacing();
 
-    UIWidgets::CVarCheckbox(
-    "Show Timestamps in Chat",
-    CVAR_REMOTE_ANCHOR("ChatShowTimestamps"),
-    UIWidgets::CheckboxOptions()
-        .Color(THEME_COLOR)
-        .DefaultValue(false)
-        .Tooltip("Show [HH:MM] in front of every chat message"));
-    if (!BenGui::mAnchorChatWindow->IsVisible()) {
-        BenGui::mAnchorChatWindow->DrawElement();
-    }
+    UIWidgets::CVarCheckbox("Show Timestamps in Chat", CVAR_REMOTE_ANCHOR("ChatShowTimestamps"),
+                            UIWidgets::CheckboxOptions()
+                                .Color(THEME_COLOR)
+                                .DefaultValue(false)
+                                .Tooltip("Show [HH:MM] in front of every chat message.\n"
+                                         "Tip: you can also right-click the chat window to toggle this."));
 
+    UIWidgets::CVarCheckbox(
+        "Ping Pop-ups", CVAR_REMOTE_ANCHOR("ChatPingPopups"),
+        UIWidgets::CheckboxOptions()
+            .Color(THEME_COLOR)
+            .DefaultValue(true)
+            .Tooltip("When someone @mentions you while the chat window is closed, show the message as a pop-up"));
 }
 
 void AnchorAdminMenu(WidgetInfo& info) {

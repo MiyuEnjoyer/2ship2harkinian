@@ -3,6 +3,7 @@
 #ifdef __cplusplus
 
 #include "2s2h/Network/Network.h"
+#include "2s2h/Network/Anchor/ChatLog.h"
 #include <libultraship/libultraship.h>
 #include "build.h"
 #include "2s2h/Rando/Rando.h"
@@ -145,6 +146,7 @@ class Anchor : public Network {
     bool CanTeleportTo(uint32_t clientId);
 
     void SendPacket_ChatMessage(const std::string& message);
+    std::vector<std::string> GetMentionableNames();
     void SendPacket_ClearTeamState(std::string teamId);
     void SendPacket_DamagePlayer(u32 clientId, u8 damageEffect, u8 damage);
     void SendPacket_GameComplete();
@@ -163,6 +165,14 @@ class Anchor : public Network {
     void SendPacket_UpdateRoomState();
     void SendPacket_UpdateTeamState(std::string targetTeamId);
 };
+
+// Chat sounds (Packets/ChatMessage.cpp)
+extern const char* const ANCHOR_CHAT_SFX_NAMES[];
+extern const int ANCHOR_CHAT_SFX_COUNT;
+extern const char* const ANCHOR_CHAT_PING_SFX_NAMES[];
+extern const int ANCHOR_CHAT_PING_SFX_COUNT;
+void AnchorChat_PlayChatSfx();
+void AnchorChat_PlayPingSfx();
 
 typedef enum {
     /* 0 */ DUMMY_PLAYER_HIT_RESPONSE_NONE,
@@ -197,10 +207,12 @@ class AnchorChatWindow : public Ship::GuiWindow {
   private:
     static int InputTextCallback(ImGuiInputTextCallbackData* data);
     void HandleHistoryNavigation(ImGuiInputTextCallbackData* data, bool up);
+    void HandleNameCompletion(ImGuiInputTextCallbackData* data);
 
     char mInputBuffer[512] = {};
     std::vector<std::string> mSentHistory;
     int32_t mHistoryPos = -1;
+    ChatNameCompletion mNameCompletion;
     bool mRequestFocus = false;
     int mCaptureFrames = 0;
 };
